@@ -3,11 +3,14 @@ package worker
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"sync"
 	"time"
 
 	"github.com/pixelvide/laravel-go/pkg/queue"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Worker manages the processing of jobs
@@ -16,17 +19,22 @@ type Worker struct {
 	FailedProvider queue.FailedJobProvider
 	QueueName      string
 	Concurrency    int
+	Tracer         trace.Tracer
 	wg             sync.WaitGroup
 	quit           chan struct{}
 }
 
 // NewWorker creates a new worker instance
-func NewWorker(driver queue.Driver, failedProvider queue.FailedJobProvider, queueName string, concurrency int) *Worker {
+func NewWorker(driver queue.Driver, failedProvider queue.FailedJobProvider, queueName string, concurrency int, tracer trace.Tracer) *Worker {
+	if tracer == nil {
+		tracer = otel.Tracer("worker")
+	}
 	return &Worker{
 		Driver:         driver,
 		FailedProvider: failedProvider,
 		QueueName:      queueName,
 		Concurrency:    concurrency,
+		Tracer:         tracer,
 		quit:           make(chan struct{}),
 	}
 }
@@ -42,7 +50,7 @@ func (w *Worker) Run(ctx context.Context) {
 
 func (w *Worker) processLoop(ctx context.Context, id int) {
 	defer w.wg.Done()
-	log.Printf("Worker %d started processing queue: %s", id, w.QueueName)
+	log.Info().Int("worker_id", id).Str("queue", w.QueueName).Msg("Worker started processing queue")
 
 	for {
 		select {
@@ -57,7 +65,7 @@ func (w *Worker) processLoop(ctx context.Context, id int) {
 				if err == context.Canceled || err == context.DeadlineExceeded {
 					return
 				}
-				log.Printf("Worker %d: Error popping job: %v", id, err)
+				log.Error().Err(err).Int("worker_id", id).Msg("Error popping job")
 				// Sleep a bit to avoid tight loop on error
 				time.Sleep(time.Second)
 				continue
@@ -72,15 +80,30 @@ func (w *Worker) processLoop(ctx context.Context, id int) {
 func (w *Worker) handleJob(ctx context.Context, job *queue.Job) {
 	var payload queue.LaravelJob
 	if err := json.Unmarshal(job.Body, &payload); err != nil {
-		log.Printf("Error unmarshalling job: %v. Body: %s", err, string(job.Body))
+		log.Error().Err(err).Str("body", string(job.Body)).Msg("Error unmarshalling job")
 		// If we can't parse it, we probably can't process it.
 		// In a real system we might move to failed jobs.
 		return
 	}
 
+	// Start Trace
+	ctx, span := w.Tracer.Start(ctx, "process_job")
+	defer span.End()
+
+	// Extract TraceID and Setup Logger
+	traceID := span.SpanContext().TraceID().String()
+	logger := log.With().
+		Str("trace_id", traceID).
+		Str("job_uuid", payload.UUID).
+		Str("job_name", payload.DisplayName).
+		Logger()
+
+	// Inject logger into context
+	ctx = logger.WithContext(ctx)
+
 	handler, err := queue.GetHandler(payload.DisplayName)
 	if err != nil {
-		log.Printf("No handler found for job: %s", payload.DisplayName)
+		logger.Error().Str("job_name", payload.DisplayName).Msg("No handler found for job")
 		// TODO: Handle unregistered jobs (maybe fail them?)
 		return
 	}
@@ -105,17 +128,21 @@ func (w *Worker) handleJob(ctx context.Context, job *queue.Job) {
 
 	err = handler(jobCtx, job)
 	if err != nil {
-		log.Printf("Job %s failed: %v", payload.DisplayName, err)
+		logger.Error().Err(err).Msg("Job failed")
 		w.handleFailure(ctx, payload, err)
 	} else {
 		// Job success
 		if ackErr := w.Driver.Ack(ctx, job); ackErr != nil {
-			log.Printf("Error acknowledging job %s: %v", payload.DisplayName, ackErr)
+			logger.Error().Err(ackErr).Msg("Error acknowledging job")
+		} else {
+			logger.Info().Msg("Job processed successfully")
 		}
 	}
 }
 
 func (w *Worker) handleFailure(ctx context.Context, payload queue.LaravelJob, err error) {
+	logger := zerolog.Ctx(ctx)
+
 	// Increment attempts
 	payload.Attempts++
 
@@ -125,12 +152,12 @@ func (w *Worker) handleFailure(ctx context.Context, payload queue.LaravelJob, er
 	}
 
 	if payload.Attempts < maxTries {
-		log.Printf("Retrying job %s (Attempt %d/%d)", payload.DisplayName, payload.Attempts, maxTries)
+		logger.Info().Int("attempt", payload.Attempts).Int("max_tries", maxTries).Msg("Retrying job")
 
 		// Serialize back to JSON
 		body, marshalErr := json.Marshal(payload)
 		if marshalErr != nil {
-			log.Printf("Error marshalling job for retry: %v", marshalErr)
+			logger.Error().Err(marshalErr).Msg("Error marshalling job for retry")
 			return
 		}
 
@@ -141,15 +168,15 @@ func (w *Worker) handleFailure(ctx context.Context, payload queue.LaravelJob, er
 		// Ideally the driver supports 'Release(..., delay)'.
 		// For MVP, we simply RPUSH (put at end of queue).
 		if pushErr := w.Driver.Push(ctx, w.QueueName, body); pushErr != nil {
-			log.Printf("Error pushing job back to queue: %v", pushErr)
+			logger.Error().Err(pushErr).Msg("Error pushing job back to queue")
 		}
 	} else {
-		log.Printf("Job %s failed permanently after %d attempts", payload.DisplayName, payload.Attempts)
+		logger.Error().Int("attempts", payload.Attempts).Msg("Job failed permanently")
 
 		// Serialize payload
 		body, marshalErr := json.Marshal(payload)
 		if marshalErr != nil {
-			log.Printf("Error marshalling job for failure: %v", marshalErr)
+			logger.Error().Err(marshalErr).Msg("Error marshalling job for failure")
 			return
 		}
 
@@ -157,10 +184,10 @@ func (w *Worker) handleFailure(ctx context.Context, payload queue.LaravelJob, er
 			// Using "redis" (or driver name) as connection name is a simplification.
 			// Ideally we know the connection name from config.
 			if failErr := w.FailedProvider.Log(ctx, "redis", w.QueueName, body, err.Error()); failErr != nil {
-				log.Printf("Error logging failed job: %v", failErr)
+				logger.Error().Err(failErr).Msg("Error logging failed job")
 			}
 		} else {
-			log.Printf("No failed job provider configured. Job lost: %s", payload.DisplayName)
+			logger.Error().Msg("No failed job provider configured. Job lost")
 		}
 	}
 }

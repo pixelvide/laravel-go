@@ -64,7 +64,7 @@ func TestWorker_Run_Success(t *testing.T) {
 	}
 
 	// Create Worker
-	w := NewWorker(driver, nil, "default", 1)
+	w := NewWorker(driver, nil, "default", 1, nil)
 
 	// Run Worker for a short time
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
@@ -102,7 +102,7 @@ func TestWorker_Run_Retry(t *testing.T) {
 	}
 
 	// Create Worker
-	w := NewWorker(driver, nil, "default", 1)
+	w := NewWorker(driver, nil, "default", 1, nil)
 
 	// Run Worker
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
