@@ -33,23 +33,7 @@ func TestPop_PostgresAutoDetection(t *testing.T) {
 
 	mock.ExpectRollback()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	// 1. Run Pop -> Should fail, but trigger auto-detection
-	_, err = driver.popJob(ctx, "default")
-	if err == nil {
-		t.Fatal("Expected error on first pop")
-	}
-
-	// Verify driver mode switched
-	driver.mu.RLock()
-	currentDriver := driver.driver
-	driver.mu.RUnlock()
-	if currentDriver != "postgres" {
-		t.Errorf("Expected driver to switch to postgres, got %s", currentDriver)
-	}
-
+	// AUTOMATIC RETRY (RECURSIVE CALL)
 	// SECOND CALL: Should use $1 syntax
 	mock.ExpectBegin()
 	// Expect query with $1 (postgres style)
@@ -62,13 +46,24 @@ func TestPop_PostgresAutoDetection(t *testing.T) {
 	mock.ExpectExec("DELETE FROM jobs WHERE id = \\$1").WithArgs(1).WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	// 2. Run Pop -> Should succeed with new syntax
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	// 1. Run Pop -> Should succeed because it retries internally!
 	job, err := driver.popJob(ctx, "default")
 	if err != nil {
-		t.Errorf("Second pop failed: %v", err)
+		t.Errorf("popJob failed even with auto-retry: %v", err)
 	}
 	if job == nil {
 		t.Error("Expected job, got nil")
+	}
+
+	// Verify driver mode switched
+	driver.mu.RLock()
+	currentDriver := driver.driver
+	driver.mu.RUnlock()
+	if currentDriver != "postgres" {
+		t.Errorf("Expected driver to switch to postgres, got %s", currentDriver)
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {

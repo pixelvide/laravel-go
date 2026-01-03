@@ -133,6 +133,10 @@ func (d *DatabaseDriver) popJob(ctx context.Context, queueName string) (*queue.J
 					d.mu.Lock()
 					d.driver = "postgres"
 					d.mu.Unlock()
+
+					// Rollback current transaction and retry
+					_ = tx.Rollback()
+					return d.popJob(ctx, queueName)
 				}
 			}
 			log.Printf("[DatabaseDriver] Error popping job (Driver=%s): %v. Query: %s", d.driver, err, query)
