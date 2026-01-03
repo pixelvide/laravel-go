@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/pixelvide/laravel-go/pkg/config"
@@ -18,6 +20,7 @@ type DatabaseDriver struct {
 	db     *sql.DB
 	table  string
 	driver string
+	mu     sync.RWMutex
 }
 
 // NewDatabaseDriver creates a new database driver
@@ -34,7 +37,11 @@ func NewDatabaseDriver(cfg config.DatabaseConfig, db *sql.DB) *DatabaseDriver {
 }
 
 func (d *DatabaseDriver) rebind(query string) string {
-	if d.driver != "postgres" && d.driver != "pq" {
+	d.mu.RLock()
+	driver := d.driver
+	d.mu.RUnlock()
+
+	if driver != "postgres" && driver != "pq" {
 		return query
 	}
 
@@ -114,6 +121,22 @@ func (d *DatabaseDriver) popJob(ctx context.Context, queueName string) (*queue.J
 
 	err = tx.QueryRowContext(ctx, query, queueName, now, now).Scan(&id, &payload)
 	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			// Auto-detect PostgreSQL driver if not configured
+			if strings.Contains(err.Error(), "pq:") || strings.Contains(err.Error(), "syntax error at or near \"AND\"") {
+				d.mu.RLock()
+				currentDriver := d.driver
+				d.mu.RUnlock()
+
+				if currentDriver != "postgres" && currentDriver != "pq" {
+					log.Printf("[DatabaseDriver] Detected PostgreSQL error: %v. Switching driver mode to 'postgres'.", err)
+					d.mu.Lock()
+					d.driver = "postgres"
+					d.mu.Unlock()
+				}
+			}
+			log.Printf("[DatabaseDriver] Error popping job (Driver=%s): %v. Query: %s", d.driver, err, query)
+		}
 		return nil, err
 	}
 
