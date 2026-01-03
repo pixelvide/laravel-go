@@ -23,3 +23,10 @@ func Execute() {
 func GetRoot() *cobra.Command {
 	return rootCmd
 }
+
+// SetInfo allows the user to configure the root command's metadata.
+func SetInfo(use, short, long string) {
+	rootCmd.Use = use
+	rootCmd.Short = short
+	rootCmd.Long = long
+}
