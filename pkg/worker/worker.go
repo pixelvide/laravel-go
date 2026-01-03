@@ -12,20 +12,22 @@ import (
 
 // Worker manages the processing of jobs
 type Worker struct {
-	Driver      queue.Driver
-	QueueName   string
-	Concurrency int
-	wg          sync.WaitGroup
-	quit        chan struct{}
+	Driver         queue.Driver
+	FailedProvider queue.FailedJobProvider
+	QueueName      string
+	Concurrency    int
+	wg             sync.WaitGroup
+	quit           chan struct{}
 }
 
 // NewWorker creates a new worker instance
-func NewWorker(driver queue.Driver, queueName string, concurrency int) *Worker {
+func NewWorker(driver queue.Driver, failedProvider queue.FailedJobProvider, queueName string, concurrency int) *Worker {
 	return &Worker{
-		Driver:      driver,
-		QueueName:   queueName,
-		Concurrency: concurrency,
-		quit:        make(chan struct{}),
+		Driver:         driver,
+		FailedProvider: failedProvider,
+		QueueName:      queueName,
+		Concurrency:    concurrency,
+		quit:           make(chan struct{}),
 	}
 }
 
@@ -150,8 +152,14 @@ func (w *Worker) handleFailure(ctx context.Context, payload queue.LaravelJob, er
 			return
 		}
 
-		if failErr := w.Driver.Fail(ctx, w.QueueName, body, err); failErr != nil {
-			log.Printf("Error marking job as failed: %v", failErr)
+		if w.FailedProvider != nil {
+			// Using "redis" (or driver name) as connection name is a simplification.
+			// Ideally we know the connection name from config.
+			if failErr := w.FailedProvider.Log(ctx, "redis", w.QueueName, body, err.Error()); failErr != nil {
+				log.Printf("Error logging failed job: %v", failErr)
+			}
+		} else {
+			log.Printf("No failed job provider configured. Job lost: %s", payload.DisplayName)
 		}
 	}
 }

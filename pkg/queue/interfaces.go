@@ -21,6 +21,4 @@ type Driver interface {
 	Pop(ctx context.Context, queueName string) (*Job, error)
 	// Push adds a job payload to the queue
 	Push(ctx context.Context, queueName string, body []byte) error
-	// Fail moves a job to the failed storage
-	Fail(ctx context.Context, queueName string, body []byte, err error) error
 }

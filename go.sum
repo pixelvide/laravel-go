@@ -13,3 +13,5 @@ github.com/elliotchance/phpserialize v1.4.0/go.mod h1:gt7XX9+ETUcLXbtTKEuyrqW3lc
 github.com/kisielk/sqlstruct v0.0.0-20201105191214-5f3e10d3ab46/go.mod h1:yyMNCyc/Ib3bDTKd379tNMpB/7/H5TjM2Y9QJ5THLbE=
 github.com/redis/go-redis/v9 v9.17.2 h1:P2EGsA4qVIM3Pp+aPocCJ7DguDHhqrXNhVcEp4ViluI=
 github.com/redis/go-redis/v9 v9.17.2/go.mod h1:u410H11HMLoB+TP67dz8rL9s6QW2j76l0//kSOd3370=
+github.com/yvasiyarov/php_session_decoder v0.0.0-20180803065642-a065a3b0b7d1 h1:p/oCPaHILUSplKqfjFyvivh4UglLHDtzs6F/wfOzyJE=
+github.com/yvasiyarov/php_session_decoder v0.0.0-20180803065642-a065a3b0b7d1/go.mod h1:96w6piyt5Z2E86/J6EQPEn76UR4scqR9bS+Y9iJF/Og=

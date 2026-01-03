@@ -45,7 +45,8 @@ func main() {
 	driver := redis.NewRedisDriver(redisConfig)
 
 	// 4. Initialize Worker
-	w := worker.NewWorker(driver, queueName, concurrency)
+	// For this example, we aren't setting up a database failed job provider, so we pass nil
+	w := worker.NewWorker(driver, nil, queueName, concurrency)
 
 	// 5. Run Worker with Graceful Shutdown
 	ctx, cancel := context.WithCancel(context.Background())
