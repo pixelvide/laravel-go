@@ -16,6 +16,12 @@ A Go-based worker system compatible with Laravel's Queue and Schedule.
 go get github.com/pixelvide/laravel-go
 ```
 
+## Documentation & AI Context
+
+For detailed package documentation, see [doc.go](doc.go) or run `go doc github.com/pixelvide/laravel-go`.
+
+For AI agents or developers needing a quick overview of the codebase structure and import paths, refer to [AGENTS.md](AGENTS.md).
+
 ## Usage
 
 ### 1. Define Handlers
@@ -23,6 +29,8 @@ go get github.com/pixelvide/laravel-go
 Create a handler function that matches the `queue.Handler` signature:
 
 ```go
+import "github.com/pixelvide/laravel-go/pkg/queue"
+
 func MyHandler(ctx context.Context, job *queue.Job) error {
     log.Printf("Processing job: %s", job.Payload.DisplayName)
     return nil
@@ -47,6 +55,7 @@ import (
     "github.com/pixelvide/laravel-go/pkg/config"
     "github.com/pixelvide/laravel-go/pkg/driver/redis"
     "github.com/pixelvide/laravel-go/pkg/worker"
+    "github.com/pixelvide/laravel-go/pkg/queue"
 )
 
 func main() {
@@ -68,7 +77,10 @@ func main() {
 To use Amazon SQS:
 
 ```go
-import "github.com/pixelvide/laravel-go/pkg/driver/sqs"
+import (
+    "github.com/pixelvide/laravel-go/pkg/driver/sqs"
+    "github.com/pixelvide/laravel-go/pkg/config"
+)
 
 // ...
 
