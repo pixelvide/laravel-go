@@ -41,7 +41,7 @@ func (d *DatabaseDriver) rebind(query string) string {
 	driver := d.driver
 	d.mu.RUnlock()
 
-	if driver != "postgres" && driver != "pq" {
+	if driver != "postgres" && driver != "pq" && driver != "pgsql" {
 		return query
 	}
 
@@ -128,7 +128,7 @@ func (d *DatabaseDriver) popJob(ctx context.Context, queueName string) (*queue.J
 				currentDriver := d.driver
 				d.mu.RUnlock()
 
-				if currentDriver != "postgres" && currentDriver != "pq" {
+				if currentDriver != "postgres" && currentDriver != "pq" && currentDriver != "pgsql" {
 					log.Printf("[DatabaseDriver] Detected PostgreSQL error: %v. Switching driver mode to 'postgres'.", err)
 					d.mu.Lock()
 					d.driver = "postgres"
