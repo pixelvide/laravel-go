@@ -6,12 +6,14 @@ import (
 
 // Job represents a generic job retrieved from the queue
 type Job struct {
-	ID   string
-	Body []byte
+	ID               string
+	Body             []byte
+	Payload          *LaravelJob // The parsed JSON envelope
+	UnserializedData any         // The unserialized PHP command properties (if applicable)
 }
 
-// Handler is the function signature for processing a job's payload
-type Handler func(ctx context.Context, payload []byte) error
+// Handler is the function signature for processing a job
+type Handler func(ctx context.Context, job *Job) error
 
 // Driver defines the interface for queue backends
 type Driver interface {

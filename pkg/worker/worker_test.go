@@ -41,7 +41,7 @@ func TestWorker_Run_Success(t *testing.T) {
 	// Setup Registry
 	jobName := "TestJob"
 	handled := false
-	queue.Register(jobName, func(ctx context.Context, body []byte) error {
+	queue.Register(jobName, func(ctx context.Context, job *queue.Job) error {
 		handled = true
 		return nil
 	})
@@ -77,7 +77,7 @@ func TestWorker_Run_Retry(t *testing.T) {
 	// Setup Registry
 	jobName := "RetryJob"
 	calls := 0
-	queue.Register(jobName, func(ctx context.Context, body []byte) error {
+	queue.Register(jobName, func(ctx context.Context, job *queue.Job) error {
 		calls++
 		return errors.New("failed")
 	})

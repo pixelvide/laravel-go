@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"os"
 	"os/signal"
@@ -15,12 +14,15 @@ import (
 )
 
 // ExampleHandler is a sample job handler
-func ExampleHandler(ctx context.Context, body []byte) error {
-	var job queue.LaravelJob
-	if err := json.Unmarshal(body, &job); err != nil {
-		return err
+func ExampleHandler(ctx context.Context, job *queue.Job) error {
+	log.Printf("Processing job: %s, ID: %s", job.Payload.DisplayName, job.Payload.UUID)
+
+	// Example of accessing unserialized PHP data
+	if job.UnserializedData != nil {
+		// Map properties if needed
+		// props := queue.GetPHPProperty(job.UnserializedData, "podcastId")
+		log.Printf("Unserialized data present")
 	}
-	log.Printf("Processing job: %s, ID: %s", job.DisplayName, job.UUID)
 	return nil
 }
 

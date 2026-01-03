@@ -83,6 +83,13 @@ func (w *Worker) handleJob(ctx context.Context, job *queue.Job) {
 		return
 	}
 
+	// Attempt to unserialize PHP command if present
+	unserialized, _ := queue.UnserializeCommand(payload.Data)
+
+	// Populate job details
+	job.Payload = &payload
+	job.UnserializedData = unserialized
+
 	// Execute handler
 	var jobCtx context.Context
 	var cancel context.CancelFunc
@@ -94,7 +101,7 @@ func (w *Worker) handleJob(ctx context.Context, job *queue.Job) {
 	}
 	defer cancel()
 
-	err = handler(jobCtx, job.Body)
+	err = handler(jobCtx, job)
 	if err != nil {
 		log.Printf("Job %s failed: %v", payload.DisplayName, err)
 		w.handleFailure(ctx, payload, err)
