@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pixelvide/laravel-go/pkg/config"
@@ -13,8 +15,9 @@ import (
 
 // DatabaseDriver implements queue.Driver for SQL databases
 type DatabaseDriver struct {
-	db    *sql.DB
-	table string
+	db     *sql.DB
+	table  string
+	driver string
 }
 
 // NewDatabaseDriver creates a new database driver
@@ -24,9 +27,31 @@ func NewDatabaseDriver(cfg config.DatabaseConfig, db *sql.DB) *DatabaseDriver {
 		tableName = "jobs"
 	}
 	return &DatabaseDriver{
-		db:    db,
-		table: tableName,
+		db:     db,
+		table:  tableName,
+		driver: cfg.Driver,
 	}
+}
+
+func (d *DatabaseDriver) rebind(query string) string {
+	if d.driver != "postgres" && d.driver != "pq" {
+		return query
+	}
+
+	// Replace ? with $1, $2, etc.
+	parts := strings.Split(query, "?")
+	if len(parts) == 1 {
+		return query
+	}
+
+	var builder strings.Builder
+	for i, part := range parts {
+		builder.WriteString(part)
+		if i < len(parts)-1 {
+			builder.WriteString("$" + strconv.Itoa(i+1))
+		}
+	}
+	return builder.String()
 }
 
 // Pop retrieves a job from the database
@@ -77,6 +102,8 @@ func (d *DatabaseDriver) popJob(ctx context.Context, queueName string) (*queue.J
 		ORDER BY id ASC
 		LIMIT 1 FOR UPDATE`, d.table) // Note: FOR UPDATE blocks if not using SKIP LOCKED (Postgres feature)
 
+	query = d.rebind(query)
+
 	// For compatibility/simplicity, we assume standard SQL.
 	// In high concurrency, this might lock.
 	// We use current timestamp for checks
@@ -96,7 +123,8 @@ func (d *DatabaseDriver) popJob(ctx context.Context, queueName string) (*queue.J
 	// To match the Redis implementation (which pops/removes), we delete it.
 	// NOTE: If worker crashes, job is lost.
 	// Improvement: Mark reserved, delete on completion. But interface is simple Pop.
-	_, err = tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s WHERE id = ?", d.table), id)
+	deleteQuery := d.rebind(fmt.Sprintf("DELETE FROM %s WHERE id = ?", d.table))
+	_, err = tx.ExecContext(ctx, deleteQuery, id)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +145,8 @@ func (d *DatabaseDriver) Push(ctx context.Context, queueName string, body []byte
 		INSERT INTO %s (queue, payload, attempts, available_at, created_at)
 		VALUES (?, ?, 0, ?, ?)`, d.table)
 
+	query = d.rebind(query)
+
 	now := time.Now().Unix()
 	_, err := d.db.ExecContext(ctx, query, queueName, body, now, now)
 	return err
@@ -135,6 +165,8 @@ func (d *DatabaseDriver) Fail(ctx context.Context, queueName string, body []byte
 	query := `
 		INSERT INTO failed_jobs (connection, queue, payload, exception, failed_at)
 		VALUES (?, ?, ?, ?, ?)`
+
+	query = d.rebind(query)
 
 	now := time.Now() // failed_at is usually timestamp
 	// We use "database" as connection name
