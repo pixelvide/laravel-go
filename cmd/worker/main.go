@@ -19,11 +19,16 @@ func ExampleHandler(ctx context.Context, job *queue.Job) error {
 		Msg("Processing job")
 
 	// Example of accessing unserialized PHP data
-	if job.UnserializedData != nil {
-		// Map properties if needed
-		// props := queue.GetPHPProperty(job.UnserializedData, "podcastId")
-		logger.Info().Msg("Unserialized data present")
+	// If the Laravel job class has a public property $podcastId
+	if podcastID := job.GetArg("podcastId"); podcastID != nil {
+		logger.Info().Any("podcast_id", podcastID).Msg("Found podcast ID in job arguments")
+	} else {
+		// Just to show data is present
+		if job.UnserializedData != nil {
+			logger.Info().Msg("Unserialized data present but podcastId not found")
+		}
 	}
+
 	return nil
 }
 

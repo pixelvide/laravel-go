@@ -12,6 +12,15 @@ type Job struct {
 	UnserializedData any         // The unserialized PHP command properties (if applicable)
 }
 
+// GetArg retrieves a property from the unserialized PHP command data.
+// It is useful for accessing public/protected properties of the Laravel job class.
+func (j *Job) GetArg(key string) any {
+	if j.UnserializedData == nil {
+		return nil
+	}
+	return GetPHPProperty(j.UnserializedData, key)
+}
+
 // Handler is the function signature for processing a job
 type Handler func(ctx context.Context, job *Job) error
 
