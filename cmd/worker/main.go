@@ -10,6 +10,7 @@ import (
 	"github.com/pixelvide/laravel-go/pkg/config"
 	"github.com/pixelvide/laravel-go/pkg/driver/redis"
 	"github.com/pixelvide/laravel-go/pkg/queue"
+	"github.com/pixelvide/laravel-go/pkg/schedule"
 	"github.com/pixelvide/laravel-go/pkg/worker"
 )
 
@@ -62,6 +63,24 @@ func main() {
 	}()
 
 	log.Println("Starting worker pool...")
+
+	// Example: Run Scheduler (Optional)
+	// go runScheduler(redisConfig)
+
 	w.Run(ctx)
 	log.Println("Worker pool stopped.")
+}
+
+func runScheduler(redisCfg config.RedisConfig) {
+	// Example of starting the scheduler
+	redisClient := redis.NewRedisDriver(redisCfg).Client
+
+	lockProvider := schedule.NewRedisLockProvider(redisClient)
+	kernel := schedule.NewKernel(lockProvider)
+
+	kernel.Register("* * * * *", func() {
+		log.Println("Running scheduled task...")
+	}, schedule.OnOneServer("my-scheduled-task"))
+
+	kernel.Run()
 }

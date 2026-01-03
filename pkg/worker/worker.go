@@ -109,8 +109,9 @@ func (w *Worker) handleJob(ctx context.Context, job *queue.Job) {
 		w.handleFailure(ctx, payload, err)
 	} else {
 		// Job success
-		// Since we used BLPOP (pop-and-delete), the job is already gone from queue.
-		// If we had a reserved state, we would Ack/Delete here.
+		if ackErr := w.Driver.Ack(ctx, job); ackErr != nil {
+			log.Printf("Error acknowledging job %s: %v", payload.DisplayName, ackErr)
+		}
 	}
 }
 

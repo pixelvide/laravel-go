@@ -120,6 +120,13 @@ func (d *DatabaseDriver) Push(ctx context.Context, queueName string, body []byte
 	return err
 }
 
+// Ack deletes the job from the database
+func (d *DatabaseDriver) Ack(ctx context.Context, job *queue.Job) error {
+	// Job was already deleted in Pop, so this is a no-op in the current implementation.
+	// If Pop used "mark reserved" strategy, this would delete it.
+	return nil
+}
+
 // Fail moves a job to the failed_jobs table
 func (d *DatabaseDriver) Fail(ctx context.Context, queueName string, body []byte, err error) error {
 	// Laravel failed_jobs: uuid, connection, queue, payload, exception, failed_at

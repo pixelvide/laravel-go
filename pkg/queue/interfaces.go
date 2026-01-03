@@ -21,4 +21,6 @@ type Driver interface {
 	Pop(ctx context.Context, queueName string) (*Job, error)
 	// Push adds a job payload to the queue
 	Push(ctx context.Context, queueName string, body []byte) error
+	// Ack acknowledges that the job has been processed and can be removed
+	Ack(ctx context.Context, job *Job) error
 }

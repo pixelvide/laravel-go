@@ -32,6 +32,10 @@ func (m *MockDriver) Push(ctx context.Context, queueName string, body []byte) er
 	return nil
 }
 
+func (m *MockDriver) Ack(ctx context.Context, job *queue.Job) error {
+	return nil
+}
+
 func (m *MockDriver) Fail(ctx context.Context, queueName string, body []byte, err error) error {
 	m.FailCall = append(m.FailCall, queue.Job{Body: body})
 	return nil

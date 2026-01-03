@@ -9,7 +9,7 @@ import (
 )
 
 type RedisDriver struct {
-	client *goredis.Client
+	Client *goredis.Client
 }
 
 // NewRedisDriver creates a new Redis driver instance
@@ -19,7 +19,7 @@ func NewRedisDriver(cfg config.RedisConfig) *RedisDriver {
 		Password: cfg.Password,
 		DB:       cfg.DB,
 	})
-	return &RedisDriver{client: rdb}
+	return &RedisDriver{Client: rdb}
 }
 
 // Pop blocks until a job is available and returns it
@@ -39,7 +39,7 @@ func (r *RedisDriver) Pop(ctx context.Context, queueName string) (*queue.Job, er
 	// Let's assume the user configures the full key or handles the prefix logic outside.
 	// For now, we use queueName as is.
 
-	result, err := r.client.BLPop(ctx, 0, queueName).Result()
+	result, err := r.Client.BLPop(ctx, 0, queueName).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,12 @@ func (r *RedisDriver) Pop(ctx context.Context, queueName string) (*queue.Job, er
 
 // Push adds a job to the queue
 func (r *RedisDriver) Push(ctx context.Context, queueName string, body []byte) error {
-	return r.client.RPush(ctx, queueName, body).Err()
+	return r.Client.RPush(ctx, queueName, body).Err()
+}
+
+// Ack is a no-op for Redis driver as BLPOP removes the item from the list
+func (r *RedisDriver) Ack(ctx context.Context, job *queue.Job) error {
+	return nil
 }
 
 // Fail pushes the job to a failed jobs list.
@@ -67,5 +72,5 @@ func (r *RedisDriver) Fail(ctx context.Context, queueName string, body []byte, e
 	// TODO: Wrap body in a failed job structure with exception details?
 	// For now, simply move to a failed list.
 	failedQueue := queueName + ":failed"
-	return r.client.RPush(ctx, failedQueue, body).Err()
+	return r.Client.RPush(ctx, failedQueue, body).Err()
 }
