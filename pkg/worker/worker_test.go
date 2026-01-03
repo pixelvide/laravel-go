@@ -116,7 +116,9 @@ func TestWorker_Run_Retry(t *testing.T) {
 	} else {
 		// Verify attempts incremented
 		var retryPayload queue.LaravelJob
-		json.Unmarshal(driver.Pushed[0].Body, &retryPayload)
+		if err := json.Unmarshal(driver.Pushed[0].Body, &retryPayload); err != nil {
+			t.Fatalf("Failed to unmarshal retry payload: %v", err)
+		}
 		if retryPayload.Attempts != 1 {
 			t.Errorf("Expected attempts to be 1, got %d", retryPayload.Attempts)
 		}

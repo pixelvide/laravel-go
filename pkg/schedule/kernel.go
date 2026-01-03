@@ -109,9 +109,10 @@ func (k *Kernel) Register(schedule string, cmd func(), opts ...JobOption) {
 						_ = k.lockProvider.ReleaseLock(context.Background(), lockName)
 					}()
 					originalJob.Run()
-				} else {
-					// log.Printf("Skipping job '%s': locked by another server", cfg.name)
 				}
+				// else {
+				// 	log.Printf("Skipping job '%s': locked by another server", cfg.name)
+				// }
 			})
 		}
 	}

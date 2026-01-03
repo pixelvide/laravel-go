@@ -71,6 +71,10 @@ func main() {
 	log.Println("Worker pool stopped.")
 }
 
+// runScheduler is an example function for setting up the scheduler.
+// It is unused in the default worker configuration but provided as a reference.
+//
+//nolint:unused
 func runScheduler(redisCfg config.RedisConfig) {
 	// Example of starting the scheduler
 	redisClient := redis.NewRedisDriver(redisCfg).Client

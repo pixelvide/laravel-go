@@ -62,7 +62,9 @@ func (d *DatabaseDriver) popJob(ctx context.Context, queueName string) (*queue.J
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// Find available job
 	// Laravel jobs table usually has: id, queue, payload, attempts, reserved_at, available_at
