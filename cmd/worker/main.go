@@ -3,15 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/pixelvide/laravel-go/pkg/config"
-	"github.com/pixelvide/laravel-go/pkg/console"
-	"github.com/pixelvide/laravel-go/pkg/driver/redis"
 	"github.com/pixelvide/laravel-go/pkg/queue"
 	"github.com/pixelvide/laravel-go/pkg/root"
 	"github.com/pixelvide/laravel-go/pkg/telemetry"
 	"github.com/spf13/cobra"
+
+	// Ensure drivers are loaded
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
+	// Ensure console commands are registered
+	_ "github.com/pixelvide/laravel-go/pkg/console"
 )
 
 // ExampleHandler is a sample job handler
@@ -37,22 +40,10 @@ func ExampleHandler(ctx context.Context, job *queue.Job) error {
 }
 
 func main() {
-	// 1. Setup Driver
-	// Configure Redis from environment or default
-	addr := os.Getenv("REDIS_ADDR")
-	if addr == "" {
-		addr = "localhost:6379"
-	}
-
-	redisConfig := config.RedisConfig{
-		Addr:     addr,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	}
-	driver := redis.NewRedisDriver(redisConfig)
-
-	// Set the driver for the worker command
-	console.SetDriver(driver)
+	// 1. Setup
+	// We rely on .env configuration for the driver now.
+	// You can still manually call console.SetDriver() if needed,
+	// but by default it will auto-configure based on environment.
 
 	// 2. Register Handlers
 	// Register a handler for a hypothetical Laravel job "App\Jobs\ProcessPodcast"

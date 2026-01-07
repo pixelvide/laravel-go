@@ -25,14 +25,16 @@ type DatabaseDriver struct {
 
 // NewDatabaseDriver creates a new database driver
 func NewDatabaseDriver(cfg config.DatabaseConfig, db *sql.DB) *DatabaseDriver {
-	tableName := cfg.Table
-	if tableName == "" {
-		tableName = "jobs"
-	}
+	tableName := "jobs" // Default
+	// cfg doesn't have Table currently, so hardcoding or using default
+
+	// Check connection type to determine driver hint
+	driverHint := cfg.Connection
+
 	return &DatabaseDriver{
 		db:     db,
 		table:  tableName,
-		driver: cfg.Driver,
+		driver: driverHint,
 	}
 }
 

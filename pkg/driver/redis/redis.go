@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pixelvide/laravel-go/pkg/config"
 	"github.com/pixelvide/laravel-go/pkg/queue"
@@ -15,7 +16,7 @@ type RedisDriver struct {
 // NewRedisDriver creates a new Redis driver instance
 func NewRedisDriver(cfg config.RedisConfig) *RedisDriver {
 	rdb := goredis.NewClient(&goredis.Options{
-		Addr:     cfg.Addr,
+		Addr:     fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		Password: cfg.Password,
 		DB:       cfg.DB,
 	})
