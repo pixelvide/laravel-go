@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pixelvide/laravel-go/pkg/config"
 	"github.com/pixelvide/laravel-go/pkg/console"
@@ -9,6 +10,7 @@ import (
 	"github.com/pixelvide/laravel-go/pkg/queue"
 	"github.com/pixelvide/laravel-go/pkg/root"
 	"github.com/pixelvide/laravel-go/pkg/telemetry"
+	"github.com/spf13/cobra"
 )
 
 // ExampleHandler is a sample job handler
@@ -50,6 +52,17 @@ func main() {
 	// Register a handler for a hypothetical Laravel job "App\Jobs\ProcessPodcast"
 	queue.Register("App\\Jobs\\ProcessPodcast", ExampleHandler)
 
-	// 3. Execute Root Command
+	// 3. Register Custom Commands
+	// Example: A custom "hello" command
+	helloCmd := &cobra.Command{
+		Use:   "hello",
+		Short: "Prints a hello message",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Hello from custom command!")
+		},
+	}
+	root.GetRoot().AddCommand(helloCmd)
+
+	// 4. Execute Root Command
 	root.Execute()
 }
