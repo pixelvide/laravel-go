@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/pixelvide/laravel-go/pkg/config"
 	"github.com/pixelvide/laravel-go/pkg/console"
@@ -37,9 +38,14 @@ func ExampleHandler(ctx context.Context, job *queue.Job) error {
 
 func main() {
 	// 1. Setup Driver
-	// Configure Redis
+	// Configure Redis from environment or default
+	addr := os.Getenv("REDIS_ADDR")
+	if addr == "" {
+		addr = "localhost:6379"
+	}
+
 	redisConfig := config.RedisConfig{
-		Addr:     "localhost:6379",
+		Addr:     addr,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	}
