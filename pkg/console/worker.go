@@ -6,8 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/pixelvide/laravel-go/pkg/config"
-	"github.com/pixelvide/laravel-go/pkg/driver/redis"
+	"github.com/pixelvide/laravel-go/pkg/queue"
 	"github.com/pixelvide/laravel-go/pkg/root"
 	"github.com/pixelvide/laravel-go/pkg/telemetry"
 	"github.com/pixelvide/laravel-go/pkg/worker"
@@ -20,9 +19,25 @@ var (
 	concurrency int
 )
 
+var (
+	globalDriver         queue.Driver
+	globalFailedProvider queue.FailedJobProvider
+)
+
+// SetDriver sets the queue driver for the worker command
+func SetDriver(driver queue.Driver) {
+	globalDriver = driver
+}
+
+// SetFailedJobProvider sets the failed job provider for the worker command
+func SetFailedJobProvider(provider queue.FailedJobProvider) {
+	globalFailedProvider = provider
+}
+
 var workerCmd = &cobra.Command{
-	Use:   "worker",
-	Short: "Start the queue worker",
+	Use:     "queue:work",
+	Aliases: []string{"worker"},
+	Short:   "Start the queue worker",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Initialize Telemetry
 		telemetry.SetGlobalLogger()
@@ -39,18 +54,12 @@ var workerCmd = &cobra.Command{
 
 		tracer := tp.Tracer("worker")
 
-		// Configure
-		redisConfig := config.RedisConfig{
-			Addr:     "localhost:6379",
-			Password: "", // no password set
-			DB:       0,  // use default DB
+		if globalDriver == nil {
+			log.Fatal().Msg("No queue driver configured. Please call console.SetDriver() before executing the root command.")
 		}
 
-		// Initialize Driver
-		driver := redis.NewRedisDriver(redisConfig)
-
 		// Initialize Worker
-		w := worker.NewWorker(driver, nil, queueName, concurrency, tracer)
+		w := worker.NewWorker(globalDriver, globalFailedProvider, queueName, concurrency, tracer)
 
 		// Run Worker with Graceful Shutdown
 		ctx, cancel := context.WithCancel(context.Background())

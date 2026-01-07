@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 
+	"github.com/pixelvide/laravel-go/pkg/config"
+	"github.com/pixelvide/laravel-go/pkg/console"
+	"github.com/pixelvide/laravel-go/pkg/driver/redis"
 	"github.com/pixelvide/laravel-go/pkg/queue"
 	"github.com/pixelvide/laravel-go/pkg/root"
 	"github.com/pixelvide/laravel-go/pkg/telemetry"
-
-	_ "github.com/pixelvide/laravel-go/pkg/console" // Register commands
 )
 
 // ExampleHandler is a sample job handler
@@ -33,10 +34,22 @@ func ExampleHandler(ctx context.Context, job *queue.Job) error {
 }
 
 func main() {
-	// 1. Register Handlers
+	// 1. Setup Driver
+	// Configure Redis
+	redisConfig := config.RedisConfig{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	}
+	driver := redis.NewRedisDriver(redisConfig)
+
+	// Set the driver for the worker command
+	console.SetDriver(driver)
+
+	// 2. Register Handlers
 	// Register a handler for a hypothetical Laravel job "App\Jobs\ProcessPodcast"
 	queue.Register("App\\Jobs\\ProcessPodcast", ExampleHandler)
 
-	// 2. Execute Root Command
+	// 3. Execute Root Command
 	root.Execute()
 }
