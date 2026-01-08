@@ -22,6 +22,8 @@ For detailed package documentation, see [doc.go](doc.go) or run `go doc github.c
 
 For AI agents or developers needing a quick overview of the codebase structure and import paths, refer to [AGENTS.md](AGENTS.md).
 
+See [docs/register_jobs.md](docs/register_jobs.md) for details on registering job handlers.
+
 ## Usage
 
 ### 1. Define Handlers
