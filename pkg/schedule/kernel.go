@@ -36,6 +36,11 @@ func NewKernel(lockProvider LockProvider) *Kernel {
 	}
 }
 
+// SetLockProvider sets the distributed lock provider
+func (k *Kernel) SetLockProvider(provider LockProvider) {
+	k.lockProvider = provider
+}
+
 // WithoutOverlapping prevents the job from running if the previous instance is still running (local only)
 func WithoutOverlapping() JobOption {
 	return func(c *jobConfig) {

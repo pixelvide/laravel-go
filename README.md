@@ -24,6 +24,7 @@ For AI agents or developers needing a quick overview of the codebase structure a
 
 See [docs/register_jobs.md](docs/register_jobs.md) for details on registering job handlers.
 See [docs/logging.md](docs/logging.md) for details on using the integrated logger and tracing.
+See [docs/scheduler.md](docs/scheduler.md) for details on using the scheduler.
 
 ## Usage
 

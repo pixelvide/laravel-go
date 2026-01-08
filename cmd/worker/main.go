@@ -7,6 +7,7 @@ import (
 	"github.com/pixelvide/laravel-go/pkg/config"
 	"github.com/pixelvide/laravel-go/pkg/queue"
 	"github.com/pixelvide/laravel-go/pkg/root"
+	"github.com/pixelvide/laravel-go/pkg/schedule"
 	"github.com/pixelvide/laravel-go/pkg/telemetry"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -56,7 +57,13 @@ func main() {
 	// Register a handler for a hypothetical Laravel job "App\Jobs\ProcessPodcast"
 	queue.Register("App\\Jobs\\ProcessPodcast", ExampleHandler)
 
-	// 3. Register Custom Commands
+	// 3. Register Scheduled Tasks
+	// Example: Run every minute on one server
+	schedule.Register("* * * * *", func() {
+		fmt.Println("Running scheduled task: Every Minute")
+	}, schedule.OnOneServer("every-minute-task"))
+
+	// 4. Register Custom Commands
 	// Example: A custom "hello" command
 	helloCmd := &cobra.Command{
 		Use:   "hello",
@@ -67,6 +74,6 @@ func main() {
 	}
 	root.GetRoot().AddCommand(helloCmd)
 
-	// 4. Execute Root Command
+	// 5. Execute Root Command
 	root.Execute()
 }
