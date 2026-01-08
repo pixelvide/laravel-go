@@ -18,7 +18,8 @@ func TestPop_PostgresAutoDetection(t *testing.T) {
 	defer db.Close()
 
 	// Initial config is NOT postgres (default/empty)
-	cfg := config.DatabaseConfig{Table: "jobs"}
+	// Connection defaults to mysql if empty or "mysql"
+	cfg := config.DatabaseConfig{Connection: "mysql"}
 	driver := NewDatabaseDriver(cfg, db)
 
 	// FIRST CALL: Fails with pq: syntax error

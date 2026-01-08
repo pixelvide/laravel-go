@@ -17,7 +17,7 @@ func TestPop_PostgresSyntax(t *testing.T) {
 	defer db.Close()
 
 	// Configure driver as postgres
-	cfg := config.DatabaseConfig{Table: "jobs", Driver: "postgres"}
+	cfg := config.DatabaseConfig{Connection: "postgres"}
 	driver := NewDatabaseDriver(cfg, db)
 
 	// Expectation
@@ -58,7 +58,7 @@ func TestPop_MySQLSyntax(t *testing.T) {
 	defer db.Close()
 
 	// Configure driver as mysql (default behavior if not postgres)
-	cfg := config.DatabaseConfig{Table: "jobs", Driver: "mysql"}
+	cfg := config.DatabaseConfig{Connection: "mysql"}
 	driver := NewDatabaseDriver(cfg, db)
 
 	// Expectation
