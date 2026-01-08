@@ -81,7 +81,9 @@ func (m *SMTPMailer) sendWithImplicitTLS(addr string, auth smtp.Auth, from strin
 	if err != nil {
 		return fmt.Errorf("failed to create SMTP client: %w", err)
 	}
-	defer client.Quit()
+	defer func() {
+		_ = client.Quit()
+	}()
 
 	if auth != nil {
 		if err = client.Auth(auth); err != nil {
