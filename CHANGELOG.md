@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0](https://github.com/pixelvide/laravel-go/compare/v1.0.0...v1.1.0) (2026-01-08)
+
+
+### Features
+
+* implement laravel mailer ([debd003](https://github.com/pixelvide/laravel-go/commit/debd003d175c162f136d6f5cb2880d7b57fb7bdd))
+* implement laravel mailer ([0c4a379](https://github.com/pixelvide/laravel-go/commit/0c4a379fe6ccc41f41e6606aa84e45fa792b354d))
+* Implement Laravel Mailer ([5096c28](https://github.com/pixelvide/laravel-go/commit/5096c28522e31e8a231c32685b48b8eb83633ba4))
+
 ## 1.0.0 (2026-01-08)
 
 
