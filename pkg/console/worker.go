@@ -52,9 +52,11 @@ var workerCmd = &cobra.Command{
 
 		// Load Configuration
 		cfg, err := config.Load()
+		appName := "laravel-go"
 		if err != nil {
 			log.Warn().Err(err).Msg("Failed to load configuration from .env")
 		} else {
+			appName = cfg.App.Name
 			// Auto-configure Driver if not manually set
 			if globalDriver == nil {
 				d, err := configureDriver(cfg)
@@ -82,7 +84,7 @@ var workerCmd = &cobra.Command{
 		}
 
 		// Initialize Worker
-		w := worker.NewWorker(globalDriver, globalFailedProvider, queueName, concurrency, cfg.App.Name, tracer)
+		w := worker.NewWorker(globalDriver, globalFailedProvider, queueName, concurrency, appName, tracer)
 
 		// Run Worker with Graceful Shutdown
 		ctx, cancel := context.WithCancel(context.Background())

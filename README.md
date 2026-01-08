@@ -68,7 +68,7 @@ func main() {
     })
 
     // Setup Worker
-    w := worker.NewWorker(driver, nil, "default", 5)
+    w := worker.NewWorker(driver, nil, "default", 5, "my-app", nil)
 
     // Run
     w.Run(context.Background())

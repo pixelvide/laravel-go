@@ -31,7 +31,7 @@
 //	func main() {
 //		queue.Register("App\\Jobs\\MyJob", MyHandler)
 //		driver := redis.NewRedisDriver(config.RedisConfig{Addr: "localhost:6379"})
-//		w := worker.NewWorker(driver, nil, "default", 5)
+//		w := worker.NewWorker(driver, nil, "default", 5, "my-app", nil)
 //		w.Run(context.Background())
 //	}
 package laravelgo
