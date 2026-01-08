@@ -1,5 +1,9 @@
 # Laravel Go
 
+[![Release](https://img.shields.io/github/v/release/pixelvide/laravel-go.svg?style=flat-square)](https://github.com/pixelvide/laravel-go/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/pixelvide/laravel-go)](https://goreportcard.com/report/github.com/pixelvide/laravel-go)
+[![Contributors](https://img.shields.io/github/contributors/pixelvide/laravel-go.svg?style=flat-square)](https://github.com/pixelvide/laravel-go/graphs/contributors)
+
 A Go-based worker system compatible with Laravel's Queue and Schedule.
 
 ## Features
@@ -120,3 +124,11 @@ kernel.Register("* * * * *", func() {
 
 kernel.Run()
 ```
+
+## Contributors
+
+Thank you to all the contributors who have helped with this project!
+
+<a href="https://github.com/pixelvide/laravel-go/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=pixelvide/laravel-go" />
+</a>
