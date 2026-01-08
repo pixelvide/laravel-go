@@ -56,12 +56,14 @@ The output will look something like this (formatted for readability):
 ```json
 {
   "level": "info",
+  "time": "2023-10-27T10:00:00Z",
+  "service": "LaravelGoApp",
+  "command": "queue:work",
   "trace_id": "4bf92f3577b34da6a3ce929d0e0e4736",
   "job_uuid": "550e8400-e29b-41d4-a716-446655440000",
   "job_name": "App\\Jobs\\ProcessOrder",
   "order_id": 12345,
-  "message": "Starting to process order",
-  "time": "2023-10-27T10:00:00Z"
+  "message": "Starting to process order"
 }
 ```
 

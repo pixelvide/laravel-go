@@ -82,7 +82,7 @@ var workerCmd = &cobra.Command{
 		}
 
 		// Initialize Worker
-		w := worker.NewWorker(globalDriver, globalFailedProvider, queueName, concurrency, tracer)
+		w := worker.NewWorker(globalDriver, globalFailedProvider, queueName, concurrency, cfg.App.Name, tracer)
 
 		// Run Worker with Graceful Shutdown
 		ctx, cancel := context.WithCancel(context.Background())

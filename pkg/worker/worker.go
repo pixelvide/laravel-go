@@ -19,21 +19,26 @@ type Worker struct {
 	FailedProvider queue.FailedJobProvider
 	QueueName      string
 	Concurrency    int
+	AppName        string // Added AppName
 	Tracer         trace.Tracer
 	wg             sync.WaitGroup
 	quit           chan struct{}
 }
 
 // NewWorker creates a new worker instance
-func NewWorker(driver queue.Driver, failedProvider queue.FailedJobProvider, queueName string, concurrency int, tracer trace.Tracer) *Worker {
+func NewWorker(driver queue.Driver, failedProvider queue.FailedJobProvider, queueName string, concurrency int, appName string, tracer trace.Tracer) *Worker {
 	if tracer == nil {
 		tracer = otel.Tracer("worker")
+	}
+	if appName == "" {
+		appName = "laravel-go"
 	}
 	return &Worker{
 		Driver:         driver,
 		FailedProvider: failedProvider,
 		QueueName:      queueName,
 		Concurrency:    concurrency,
+		AppName:        appName,
 		Tracer:         tracer,
 		quit:           make(chan struct{}),
 	}
@@ -93,6 +98,9 @@ func (w *Worker) handleJob(ctx context.Context, job *queue.Job) {
 	// Extract TraceID and Setup Logger
 	traceID := span.SpanContext().TraceID().String()
 	logger := log.With().
+		Timestamp(). // Ensure timestamp is present
+		Str("service", w.AppName). // Add service name
+		Str("command", "queue:work"). // Add command name
 		Str("trace_id", traceID).
 		Str("job_uuid", payload.UUID).
 		Str("job_name", payload.DisplayName).
