@@ -51,7 +51,9 @@ func (s *DatabaseStore) Put(ctx context.Context, key string, value string, ttl t
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		_ = tx.Rollback()
+	}()
 
 	// Delete old
 	delQuery := fmt.Sprintf("DELETE FROM %s WHERE %s = ?", s.table, s.quote("key"))

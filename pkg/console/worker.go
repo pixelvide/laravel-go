@@ -138,6 +138,7 @@ func configureDriver(cfg *config.Config) (queue.Driver, error) {
 		if queueUrl == "default" {
 			// Try to find URL for default queue?
 			// Simplification: Assume user puts URL in QUEUE_QUEUE for SQS
+			log.Warn().Msg("Using 'default' as SQS queue URL. Ensure QUEUE_QUEUE is set to a valid URL in .env")
 		}
 		return driversqs.NewSQSDriver(client, queueUrl), nil
 
